@@ -151,14 +151,14 @@ public class SieveView extends JPanel {
 
             if (choisi && premier) {
                 button.setBackground(COULEUR_PREMIER);
-                button.setForeground(Color.WHITE);
+                button.setText(htmlBlanc(nombre));
             } else if (choisi && !premier) {
                 button.setBackground(COULEUR_ERREUR);
-                button.setForeground(Color.WHITE);
+                button.setText(htmlBlanc(nombre));
                 parfait = false;
             } else if (!choisi && premier) {
                 button.setBackground(COULEUR_BLEU);
-                button.setForeground(Color.WHITE);
+                button.setText(htmlBlanc(nombre));
                 parfait = false;
             } else {
                 button.setOpaque(false);
@@ -195,7 +195,7 @@ public class SieveView extends JPanel {
             button.setOpaque(true);
             button.setBorderPainted(false);
             button.setBackground(COULEUR_PREMIER);
-            button.setForeground(Color.WHITE);
+            button.setText(htmlBlanc(nombre));
             button.setEnabled(false);
             griserMultiplesDe(nombre);
             messageLabel.setForeground(COULEUR_PREMIER);
@@ -218,6 +218,11 @@ public class SieveView extends JPanel {
                 nonPremiersTraites++;
             }
         }
+    }
+
+    /** HTML force le blanc même quand le bouton est désactivé (sinon le L&F le grise). */
+    private String htmlBlanc(int nombre) {
+        return "<html><font color='white'>" + nombre + "</font></html>";
     }
 
     private void marquerSupprime(JButton button, String numeroAffiche) {

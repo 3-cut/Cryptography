@@ -7,7 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Exercice 1 (réseaux euclidiens, avant Kyber) : trouver la combinaison
+ * Exercice 2 (réseaux euclidiens, avant Kyber) : trouver la combinaison
  * linéaire entière a·u + b·v permettant d'aller exactement du point A au
  * point B, tous deux appartenant au réseau engendré par u et v.
  * Même comportement "un seul clic sur Valider" que le challenge de
@@ -48,15 +48,13 @@ public class LatticeCombinationView extends JPanel {
     }
 
     private void genererExercice() {
-        // Base volontairement "longue et proche" : u et v sont presque
-        // parallèles (u - v = (1, 0), un vecteur court), donc moins évident
-        // à visualiser qu'une base courte et bien orthogonale.
         lattice = new LatticeModel(new int[]{8, 3}, new int[]{7, 3});
-
-        pointA = lattice.combine(1, 0); // = u = (8, 3)
-        solutionA = 1;
+        // Départ : origine (0,0). Cible A = 2*u + (-1)*v = (9, 3).
+        solutionA = 2;
         solutionB = -1;
-        pointB = lattice.combine(pointA, solutionA, solutionB); // = (9, 3)
+        pointA = new int[]{solutionA * lattice.u[0] + solutionB * lattice.v[0],
+                           solutionA * lattice.u[1] + solutionB * lattice.v[1]};
+        pointB = null;
     }
 
     private JComponent buildHeader() {
@@ -64,7 +62,7 @@ public class LatticeCombinationView extends JPanel {
         JButton homeButton = new JButton("← Accueil");
         homeButton.addActionListener(e -> controller.goHome());
 
-        JLabel title = new JLabel("Kyber — Réseaux euclidiens (1/2)", SwingConstants.CENTER);
+        JLabel title = new JLabel("Kyber — Réseaux euclidiens (2/3)", SwingConstants.CENTER);
         title.setFont(new Font("SansSerif", Font.BOLD, 20));
 
         header.add(homeButton, BorderLayout.WEST);
@@ -77,12 +75,12 @@ public class LatticeCombinationView extends JPanel {
 
         JLabel but = new JLabel(
             "<html>But : trouver la combinaison linéaire (entière) pour aller<br>"
-                + "du point A au point B, à l'aide des vecteurs u et v.</html>");
+                + "de l'origine au point A, à l'aide des vecteurs u et v.</html>");
         but.setFont(new Font("SansSerif", Font.PLAIN, 13));
         but.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
         grille = new LatticeGridPanel();
-        grille.configurer(lattice.u, lattice.v, pointA, pointB);
+        grille.configurer(lattice.u, lattice.v, pointA, null);
 
         JPanel droite = new JPanel();
         droite.setLayout(new BoxLayout(droite, BoxLayout.Y_AXIS));
@@ -91,8 +89,8 @@ public class LatticeCombinationView extends JPanel {
         droite.add(ligne("u = (" + lattice.u[0] + ", " + lattice.u[1] + ")"));
         droite.add(ligne("v = (" + lattice.v[0] + ", " + lattice.v[1] + ")"));
         droite.add(Box.createVerticalStrut(10));
-        droite.add(ligne("A = (" + pointA[0] + ", " + pointA[1] + ")"));
-        droite.add(ligne("B = (" + pointB[0] + ", " + pointB[1] + ")"));
+        droite.add(ligne("Origine = (0, 0)  (départ)"));
+        droite.add(ligne("A = (" + pointA[0] + ", " + pointA[1] + ")  (cible)"));
         droite.add(Box.createVerticalStrut(15));
 
         JPanel coeffRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
@@ -107,7 +105,7 @@ public class LatticeCombinationView extends JPanel {
         coeffRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         droite.add(coeffRow);
 
-        JLabel formule = new JLabel("A + a·u + b·v = ?  (point rouge)");
+        JLabel formule = new JLabel("(0,0) + a·u + b·v = ?  (point rouge)");
         formule.setFont(new Font("Monospaced", Font.PLAIN, 12));
         formule.setForeground(Color.GRAY);
         formule.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
@@ -129,14 +127,14 @@ public class LatticeCombinationView extends JPanel {
     private void mettreAJourApercu() {
         int a = (Integer) spinnerA.getValue();
         int b = (Integer) spinnerB.getValue();
-        grille.setPointCourant(lattice.combine(pointA, a, b));
+        grille.setPointCourant(lattice.combine(new int[]{0, 0}, a, b));
     }
 
     private JComponent buildFooter() {
         JPanel footer = new JPanel(new BorderLayout(10, 10));
 
         JButton skipButton = new JButton("Passer →");
-        skipButton.setToolTipText("Aller directement au second exercice (CVP)");
+        skipButton.setToolTipText("Aller directement au troisième exercice (CVP)");
         skipButton.addActionListener(e -> controller.goToLatticeCvp());
 
         messageLabel = new JLabel(" ", SwingConstants.CENTER);

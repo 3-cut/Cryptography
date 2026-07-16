@@ -2,6 +2,7 @@ package view;
 
 import controller.AppController;
 import model.KyberModel;
+import model.Ring;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,13 +25,17 @@ import java.util.Arrays;
 public class KyberProtocolView extends JPanel {
 
     private static final Color ROUGE = new Color(0xE7, 0x4C, 0x3C);
-    private static final Color VERT = new Color(0x1E, 0x8E, 0x3E);
 
     private final AppController controller;
     private final KyberModel model;
 
     private int[] lastBits;
     private KyberModel.Ciphertext lastCipher;
+
+    private int[][][] exempleA;
+    private int[][] exempleS;
+    private int[][] exempleE;
+    private int[][] exempleT;
 
     private JTextField messageField;
     private JLabel encryptionResultLabel;
@@ -40,6 +45,7 @@ public class KyberProtocolView extends JPanel {
         this.controller = controller;
         this.model = controller.getKyberModel();
         model.genererCles();
+        genererExempleN4();
 
         setLayout(new BorderLayout(15, 15));
         setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
@@ -125,7 +131,45 @@ public class KyberProtocolView extends JPanel {
         card.add(detailButton);
         card.add(Box.createVerticalStrut(10));
         card.add(boldLine("Clé publique = (A, t)"));
+        card.add(exempleCaption());
+        card.add(exempleLine("A ="));
+        card.add(buildMatriceExempleA());
+        card.add(Box.createVerticalStrut(4));
+        card.add(exempleLine("t ="));
+        card.add(buildVecteurExemple(exempleT));
         return card;
+    }
+
+    /** Affiche A sous forme de matrice classique 2x2 (les colonnes s'alignent automatiquement). */
+    private JComponent buildMatriceExempleA() {
+        JPanel grid = new JPanel(new GridLayout(2, 2, 14, 2));
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        grid.setBorder(BorderFactory.createEmptyBorder(0, 14, 0, 0));
+        grid.add(matriceCellule(exempleA[0][0]));
+        grid.add(matriceCellule(exempleA[0][1]));
+        grid.add(matriceCellule(exempleA[1][0]));
+        grid.add(matriceCellule(exempleA[1][1]));
+        return grid;
+    }
+
+    /** Affiche un vecteur (t ou s) comme une colonne classique, une ligne par composante. */
+    private JComponent buildVecteurExemple(int[][] vecteur) {
+        JPanel grid = new JPanel(new GridLayout(vecteur.length, 1, 0, 2));
+        grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        grid.setBorder(BorderFactory.createEmptyBorder(0, 14, 0, 0));
+        for (int[] poly : vecteur) {
+            grid.add(matriceCellule(poly));
+        }
+        return grid;
+    }
+
+    private JLabel matriceCellule(int[] poly) {
+        JLabel label = new JLabel(Arrays.toString(poly));
+        label.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        label.setForeground(Color.GRAY);
+        return label;
     }
 
     private JPanel buildPrivateKeyCard() {
@@ -148,7 +192,58 @@ public class KyberProtocolView extends JPanel {
         card.add(detailButton);
         card.add(Box.createVerticalStrut(10));
         card.add(boldLine("Clé privée = (s)"));
+        card.add(exempleCaption());
+        card.add(exempleLine("s ="));
+        card.add(buildVecteurExemple(exempleS));
         return card;
+    }
+
+    /** Exemple concret avec n=4 (au lieu de 256), calculé une fois et affiché en ligne dans les cartes. */
+    private void genererExempleN4() {
+        int nExemple = 4;
+        int kExemple = 2;
+        Ring ringExemple = new Ring(nExemple, KyberModel.Q);
+
+        exempleA = new int[kExemple][kExemple][];
+        for (int i = 0; i < kExemple; i++) {
+            for (int j = 0; j < kExemple; j++) {
+                exempleA[i][j] = ringExemple.createRandomPolynomial();
+            }
+        }
+
+        exempleS = new int[kExemple][];
+        exempleE = new int[kExemple][];
+        for (int i = 0; i < kExemple; i++) {
+            exempleS[i] = ringExemple.createRandomNoisePolynomial();
+            exempleE[i] = ringExemple.createRandomNoisePolynomial();
+        }
+
+        exempleT = new int[kExemple][];
+        for (int i = 0; i < kExemple; i++) {
+            int[] somme = new int[nExemple];
+            for (int j = 0; j < kExemple; j++) {
+                somme = ringExemple.sum(somme, ringExemple.multiplication(exempleA[i][j], exempleS[j]));
+            }
+            exempleT[i] = ringExemple.sum(somme, exempleE[i]);
+        }
+    }
+
+    private JComponent exempleCaption() {
+        JLabel label = new JLabel("Exemple avec n = 4 :");
+        label.setFont(new Font("SansSerif", Font.ITALIC, 11));
+        label.setForeground(Color.GRAY);
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        label.setBorder(BorderFactory.createEmptyBorder(6, 4, 0, 4));
+        return label;
+    }
+
+    private JComponent exempleLine(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        label.setForeground(Color.GRAY);
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        label.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
+        return label;
     }
 
     // ---- petits composants réutilisables (même style que RsaProtocolView) ----
@@ -169,6 +264,14 @@ public class KyberProtocolView extends JPanel {
         return label;
     }
 
+    private void showInfoDialog(String explanation, String title) {
+        JTextArea area = new JTextArea(explanation);
+        area.setEditable(false);
+        area.setOpaque(false);
+        area.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        JOptionPane.showMessageDialog(this, area, title, JOptionPane.INFORMATION_MESSAGE);
+    }
+
     private JComponent infoLine(String text, String explanation, String dialogTitle) {
         JPanel line = new JPanel(new BorderLayout(6, 0));
         line.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -180,8 +283,7 @@ public class KyberProtocolView extends JPanel {
 
         JButton infoButton = new JButton("i");
         infoButton.setMargin(new Insets(0, 4, 0, 4));
-        infoButton.addActionListener(e -> JOptionPane.showMessageDialog(
-            this, explanation, dialogTitle, JOptionPane.INFORMATION_MESSAGE));
+        infoButton.addActionListener(e -> showInfoDialog(explanation, dialogTitle));
 
         line.add(label, BorderLayout.CENTER);
         line.add(infoButton, BorderLayout.EAST);
@@ -237,9 +339,16 @@ public class KyberProtocolView extends JPanel {
     // ---- chiffrement / déchiffrement ----
 
     private JComponent buildCipherPanel() {
+        JPanel container = new JPanel(new GridLayout(1, 2, 15, 0));
+        container.add(buildChiffrementPanel());
+        container.add(buildDechiffrementPanel());
+        return container;
+    }
+
+    private JComponent buildChiffrementPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createTitledBorder("Chiffrer / déchiffrer un message"));
+        panel.setBorder(BorderFactory.createTitledBorder("Chiffrement"));
 
         JLabel hint = new JLabel(
             "Message court (" + (KyberModel.N / 8) + " caractères ASCII maximum, encodé en bits).");
@@ -247,7 +356,7 @@ public class KyberProtocolView extends JPanel {
         hint.setForeground(Color.GRAY);
         hint.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel alice = new JLabel("Alice  →  message  →  chiffrer  →  message chiffré  →  déchiffrer  →  message déchiffré  →  Bob");
+        JLabel alice = new JLabel("Alice  →  message  →  chiffrer  →  message chiffré");
         alice.setFont(new Font("SansSerif", Font.ITALIC, 12));
         alice.setForeground(Color.DARK_GRAY);
         alice.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -256,12 +365,12 @@ public class KyberProtocolView extends JPanel {
         JLabel captionChiffrer = new JLabel(
             "<html>À l'aide de la clé publique (de Bob) :  u = A<sup>T</sup>·r + e1,&nbsp;&nbsp; v = t<sup>T</sup>·r + e2 + m</html>");
         captionChiffrer.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        captionChiffrer.setForeground(new Color(0x27, 0xAE, 0x60));
+        captionChiffrer.setForeground(Color.BLACK);
         captionChiffrer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel inputRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
         inputRow.add(new JLabel("Entrer un message à chiffrer :"));
-        messageField = new JTextField(14);
+        messageField = new JTextField(12);
         inputRow.add(messageField);
         JButton encryptButton = new JButton("Chiffrer");
         encryptButton.addActionListener(e -> onEncryptClicked());
@@ -271,12 +380,30 @@ public class KyberProtocolView extends JPanel {
         encryptionResultLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
         encryptionResultLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        panel.add(hint);
+        panel.add(alice);
+        panel.add(captionChiffrer);
+        panel.add(inputRow);
+        panel.add(encryptionResultLabel);
+        return panel;
+    }
+
+    private JComponent buildDechiffrementPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createTitledBorder("Déchiffrement"));
+
+        JLabel bob = new JLabel("message chiffré  →  déchiffrer  →  message déchiffré  →  Bob");
+        bob.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        bob.setForeground(Color.DARK_GRAY);
+        bob.setAlignmentX(Component.LEFT_ALIGNMENT);
+        bob.setBorder(BorderFactory.createEmptyBorder(2, 0, 8, 0));
+
         JLabel captionDechiffrer = new JLabel(
             "<html>À l'aide de la clé privée (de Bob) :  m = v − s<sup>T</sup>·u</html>");
         captionDechiffrer.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        captionDechiffrer.setForeground(new Color(0x27, 0xAE, 0x60));
+        captionDechiffrer.setForeground(Color.BLACK);
         captionDechiffrer.setAlignmentX(Component.LEFT_ALIGNMENT);
-        captionDechiffrer.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
         JPanel decryptRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
         JButton decryptButton = new JButton("Déchiffrer");
@@ -287,11 +414,7 @@ public class KyberProtocolView extends JPanel {
         decryptionResultLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
         decryptionResultLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        panel.add(hint);
-        panel.add(alice);
-        panel.add(captionChiffrer);
-        panel.add(inputRow);
-        panel.add(encryptionResultLabel);
+        panel.add(bob);
         panel.add(captionDechiffrer);
         panel.add(decryptRow);
         panel.add(decryptionResultLabel);
@@ -334,7 +457,7 @@ public class KyberProtocolView extends JPanel {
         String texteDechiffre = model.bitsEnTexte(bitsDechiffres);
         boolean succes = Arrays.equals(lastBits, bitsDechiffres);
 
-        decryptionResultLabel.setForeground(succes ? VERT : ROUGE);
+        decryptionResultLabel.setForeground(succes ? Color.BLACK : ROUGE);
         decryptionResultLabel.setText(
             "m = v − sᵗ·u   →   message déchiffré : \"" + texteDechiffre + "\""
                 + (succes ? "" : "  (erreur : les bits diffèrent)"));

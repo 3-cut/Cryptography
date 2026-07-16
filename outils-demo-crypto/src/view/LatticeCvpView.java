@@ -7,8 +7,8 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Exercice 2 (réseaux euclidiens, avant Kyber) : on part du point A (qui
- * appartient au réseau, comme dans l'exercice 1) et on cherche à s'approcher
+ * Exercice 3 (réseaux euclidiens, avant Kyber) : on part du point A (qui
+ * appartient au réseau, comme dans l'exercice 2) et on cherche à s'approcher
  * le plus possible du point B -- qui n'appartient pas forcément au réseau.
  * C'est le problème du vecteur le plus proche (Closest Vector Problem, CVP).
  * En 2D on peut chercher la solution par force brute
@@ -22,8 +22,7 @@ public class LatticeCvpView extends JPanel {
 
     private final AppController controller;
     private LatticeModel lattice;
-    private int[] pointA; // sur le réseau (départ)
-    private int[] pointB; // hors réseau (cible à approcher)
+    private double[] pointA; // cible à coordonnées flottantes (pas sur le réseau)
     private int solutionA;
     private int solutionB;
     private boolean validated = false;
@@ -49,13 +48,11 @@ public class LatticeCvpView extends JPanel {
     }
 
     private void genererExercice() {
-        // Même base "longue et proche" que l'exercice 1, pour la continuité.
         lattice = new LatticeModel(new int[]{8, 3}, new int[]{7, 3});
-
-        pointA = new int[]{0, 0}; // l'origine, sur le réseau
-        pointB = new int[]{10, 4}; // hors réseau (pas atteignable exactement)
-
-        int[] solution = lattice.closestCombination(pointA, pointB, -8, 8);
+        // Cible A = (4.2, 5.5) — non entière, hors réseau, solution unique :
+        // a=-10, b=12 → point (4,6), distance ≈ 0.54
+        pointA = new double[]{4.2, 5.5};
+        int[] solution = lattice.closestCombination(new int[]{0, 0}, pointA, -15, 15);
         solutionA = solution[0];
         solutionB = solution[1];
     }
@@ -65,7 +62,7 @@ public class LatticeCvpView extends JPanel {
         JButton homeButton = new JButton("← Accueil");
         homeButton.addActionListener(e -> controller.goHome());
 
-        JLabel title = new JLabel("Kyber — Réseaux euclidiens (2/2 : CVP)", SwingConstants.CENTER);
+        JLabel title = new JLabel("Kyber — Réseaux euclidiens (3/3 : CVP)", SwingConstants.CENTER);
         title.setFont(new Font("SansSerif", Font.BOLD, 20));
 
         header.add(homeButton, BorderLayout.WEST);
@@ -77,13 +74,13 @@ public class LatticeCvpView extends JPanel {
         JPanel center = new JPanel(new BorderLayout(15, 15));
 
         JLabel but = new JLabel(
-            "<html>But : trouver la plus petite combinaison linéaire pour s'approcher<br>"
-                + "du point B, en partant du point A (\"Closest Vector Problem\", C.V.P.).</html>");
+            "<html>But : partant de l'origine, trouver la combinaison a·u + b·v qui se rapproche<br>"
+                + "le plus possible du point A (qui n'appartient pas au réseau) — C.V.P.</html>");
         but.setFont(new Font("SansSerif", Font.PLAIN, 13));
         but.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
         grille = new LatticeGridPanel();
-        grille.configurer(lattice.u, lattice.v, pointA, pointB);
+        grille.configurerCvp(lattice.u, lattice.v, pointA);
 
         JPanel droite = new JPanel();
         droite.setLayout(new BoxLayout(droite, BoxLayout.Y_AXIS));
@@ -92,13 +89,13 @@ public class LatticeCvpView extends JPanel {
         droite.add(ligne("u = (" + lattice.u[0] + ", " + lattice.u[1] + ")"));
         droite.add(ligne("v = (" + lattice.v[0] + ", " + lattice.v[1] + ")"));
         droite.add(Box.createVerticalStrut(10));
-        droite.add(ligne("A = (" + pointA[0] + ", " + pointA[1] + ")  (sur le réseau)"));
-        droite.add(ligne("B = (" + pointB[0] + ", " + pointB[1] + ")  (hors réseau)"));
+        droite.add(ligne("Origine = (0, 0)  (départ)"));
+        droite.add(ligne("A = (" + pointA[0] + ", " + pointA[1] + ")  (cible, hors réseau)"));
         droite.add(Box.createVerticalStrut(15));
 
         JPanel coeffRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        spinnerA = new JSpinner(new SpinnerNumberModel(0, -10, 10, 1));
-        spinnerB = new JSpinner(new SpinnerNumberModel(0, -10, 10, 1));
+        spinnerA = new JSpinner(new SpinnerNumberModel(0, -15, 15, 1));
+        spinnerB = new JSpinner(new SpinnerNumberModel(0, -15, 15, 1));
         spinnerA.addChangeListener(e -> mettreAJourApercu());
         spinnerB.addChangeListener(e -> mettreAJourApercu());
         coeffRow.add(new JLabel("a ="));
@@ -108,7 +105,7 @@ public class LatticeCvpView extends JPanel {
         coeffRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         droite.add(coeffRow);
 
-        JLabel formule = new JLabel("A + a·u + b·v = ?  (point rouge)");
+        JLabel formule = new JLabel("(0,0) + a·u + b·v = ?  (point rouge)");
         formule.setFont(new Font("Monospaced", Font.PLAIN, 12));
         formule.setForeground(Color.GRAY);
         formule.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
@@ -130,7 +127,7 @@ public class LatticeCvpView extends JPanel {
     private void mettreAJourApercu() {
         int a = (Integer) spinnerA.getValue();
         int b = (Integer) spinnerB.getValue();
-        grille.setPointCourant(lattice.combine(pointA, a, b));
+        grille.setPointCourant(lattice.combine(new int[]{0, 0}, a, b));
     }
 
     private JComponent buildFooter() {
@@ -161,11 +158,12 @@ public class LatticeCvpView extends JPanel {
         if (!validated) {
             int a = (Integer) spinnerA.getValue();
             int b = (Integer) spinnerB.getValue();
-            int[] proposition = lattice.combine(pointA, a, b);
-            double distanceProposition = lattice.distance(proposition, pointB);
+            int[] origine = {0, 0};
+            int[] proposition = lattice.combine(origine, a, b);
+            double distanceProposition = lattice.distance(proposition, pointA);
 
-            int[] meilleur = lattice.combine(pointA, solutionA, solutionB);
-            double distanceOptimale = lattice.distance(meilleur, pointB);
+            int[] meilleur = lattice.combine(origine, solutionA, solutionB);
+            double distanceOptimale = lattice.distance(meilleur, pointA);
 
             validated = true;
             spinnerA.setEnabled(false);

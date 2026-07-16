@@ -15,7 +15,8 @@ public class FactorizationChallengeView extends JPanel {
 
     private int levelIndex = 0;
     private BigInteger currentN;
-    private BigInteger[] currentFactors;
+    private BigInteger currentP;
+    private BigInteger currentQ;
     private boolean validated = false;
 
     private JLabel levelLabel;
@@ -52,13 +53,10 @@ public class FactorizationChallengeView extends JPanel {
 
     private JComponent buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
-
         JButton homeButton = new JButton("← Accueil");
         homeButton.addActionListener(e -> controller.goHome());
-
         levelLabel = new JLabel("Niveau 1", SwingConstants.CENTER);
         levelLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
-
         header.add(homeButton, BorderLayout.WEST);
         header.add(levelLabel, BorderLayout.CENTER);
         return header;
@@ -68,24 +66,29 @@ public class FactorizationChallengeView extends JPanel {
         JPanel center = new JPanel();
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
 
-        JLabel subtitle = new JLabel(
-            "Challenge de factorisation en 2 nombres premiers", SwingConstants.CENTER);
+        JLabel subtitle = new JLabel("Challenge de factorisation en 2 nombres premiers", SwingConstants.CENTER);
         subtitle.setFont(new Font("SansSerif", Font.PLAIN, 13));
         subtitle.setForeground(Color.GRAY);
         subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        JLabel hint = new JLabel("Trouvez les deux nombres premiers p et q tels que p × q = N.", SwingConstants.CENTER);
+        hint.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        hint.setForeground(Color.GRAY);
+        hint.setAlignmentX(Component.CENTER_ALIGNMENT);
+        hint.setBorder(BorderFactory.createEmptyBorder(8, 0, 10, 0));
+
         nLabel = new JLabel("N = ?", SwingConstants.CENTER);
         nLabel.setFont(new Font("Monospaced", Font.BOLD, 16));
-
-        voirEnEntierButton = new JButton("Voir en entier");
-        voirEnEntierButton.addActionListener(e -> onVoirEnEntierClicked());
-        voirEnEntierButton.setVisible(false);
+        nLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JPanel nRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        voirEnEntierButton = new JButton("Voir en entier");
+        voirEnEntierButton.addActionListener(ev -> onVoirEnEntierClicked());
+        voirEnEntierButton.setVisible(false);
         nRow.add(nLabel);
         nRow.add(voirEnEntierButton);
         nRow.setAlignmentX(Component.CENTER_ALIGNMENT);
-        nRow.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        nRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
 
         JPanel inputsRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 5));
         pField = new JTextField(10);
@@ -94,20 +97,11 @@ public class FactorizationChallengeView extends JPanel {
         qField.setBorder(DEFAULT_FIELD_BORDER);
         pField.setFont(new Font("Monospaced", Font.PLAIN, 16));
         qField.setFont(new Font("Monospaced", Font.PLAIN, 16));
-
         inputsRow.add(new JLabel("p ="));
         inputsRow.add(pField);
         inputsRow.add(new JLabel("q ="));
         inputsRow.add(qField);
         inputsRow.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JLabel hint = new JLabel(
-            "Trouvez les deux nombres premiers p et q tels que p × q = N.",
-            SwingConstants.CENTER);
-        hint.setFont(new Font("SansSerif", Font.ITALIC, 12));
-        hint.setForeground(Color.GRAY);
-        hint.setAlignmentX(Component.CENTER_ALIGNMENT);
-        hint.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
         giveUpButton = new JButton("Je ne sais pas...");
         giveUpButton.setFont(new Font("SansSerif", Font.BOLD, 14));
@@ -129,7 +123,6 @@ public class FactorizationChallengeView extends JPanel {
         JPanel footer = new JPanel(new BorderLayout(10, 10));
 
         JButton skipButton = new JButton("Passer →");
-        skipButton.setToolTipText("Aller directement à la présentation du protocole RSA");
         skipButton.addActionListener(e -> controller.goToRsaProtocolPresentation());
 
         messageLabel = new JLabel(" ", SwingConstants.CENTER);
@@ -138,40 +131,21 @@ public class FactorizationChallengeView extends JPanel {
         actionButton = new JButton("Valider");
         actionButton.addActionListener(e -> onActionButtonClicked());
 
-        JPanel left = new JPanel();
-        left.add(skipButton);
-
-        JPanel right = new JPanel();
-        right.add(actionButton);
-
-        footer.add(left, BorderLayout.WEST);
+        footer.add(new JPanel(){{ add(skipButton); }}, BorderLayout.WEST);
         footer.add(messageLabel, BorderLayout.CENTER);
-        footer.add(right, BorderLayout.EAST);
+        footer.add(new JPanel(){{ add(actionButton); }}, BorderLayout.EAST);
         return footer;
     }
 
     private void loadLevel() {
-        BigInteger[] pull;
-        BigInteger[] facteurs;
-        switch (levelIndex) {
-            case 0 -> {
-                pull = toBigIntegerArray(model.getPull1());
-                facteurs = toBigIntegerArray(model.getFactors1());
-            }
-            case 1 -> {
-                pull = toBigIntegerArray(model.getPull2());
-                facteurs = toBigIntegerArray(model.getFactors2());
-            }
-            default -> {
-                pull = model.getPull3();
-                facteurs = model.getFactors3();
-            }
-        }
-        int index = model.chooseRandomInd(pull);
-        currentN = pull[index];
-        currentFactors = new BigInteger[]{facteurs[2 * index], facteurs[2 * index + 1]};
+        BigInteger[] defi = model.genererDefi(levelIndex);
+        currentN = defi[0];
+        currentP = defi[1];
+        currentQ = defi[2];
 
-        levelLabel.setText("Niveau " + (levelIndex + 1) + " / 3");
+        boolean estDernierNiveau = levelIndex == RSAModel.NB_NIVEAUX_FACTORISATION - 1;
+
+        levelLabel.setText("Niveau " + (levelIndex + 1) + " / " + RSAModel.NB_NIVEAUX_FACTORISATION);
         nLabel.setText("N = " + formatGrand(currentN));
         pField.setText("");
         qField.setText("");
@@ -181,26 +155,15 @@ public class FactorizationChallengeView extends JPanel {
         qField.setEnabled(true);
         messageLabel.setText(" ");
         actionButton.setText("Valider");
-        giveUpButton.setVisible(levelIndex == 2);
+        giveUpButton.setVisible(estDernierNiveau);
         giveUpButton.setEnabled(true);
-        voirEnEntierButton.setVisible(levelIndex == 2);
+        voirEnEntierButton.setVisible(estDernierNiveau);
         validated = false;
     }
 
-    private BigInteger[] toBigIntegerArray(int[] valeurs) {
-        BigInteger[] resultat = new BigInteger[valeurs.length];
-        for (int i = 0; i < valeurs.length; i++) {
-            resultat[i] = BigInteger.valueOf(valeurs[i]);
-        }
-        return resultat;
-    }
-
-    /** Tronque l'affichage des très grands nombres (niveau 3 : N fait ~617 chiffres). */
     private String formatGrand(BigInteger valeur) {
         String texte = valeur.toString();
-        if (texte.length() <= 40) {
-            return texte;
-        }
+        if (texte.length() <= 40) return texte;
         return texte.substring(0, 12) + "…(" + texte.length() + " chiffres)…"
             + texte.substring(texte.length() - 6);
     }
@@ -230,35 +193,31 @@ public class FactorizationChallengeView extends JPanel {
 
         boolean correct = p != null && q != null
             && p.multiply(q).equals(currentN)
-            && ((p.equals(currentFactors[0]) && q.equals(currentFactors[1]))
-                || (p.equals(currentFactors[1]) && q.equals(currentFactors[0])));
+            && ((p.equals(currentP) && q.equals(currentQ))
+                || (p.equals(currentQ) && q.equals(currentP)));
 
         pField.setEnabled(false);
         qField.setEnabled(false);
         giveUpButton.setEnabled(false);
-        actionButton.setText(levelIndex < 2 ? "Suite" : "Suite (protocole RSA)");
+        actionButton.setText(levelIndex < RSAModel.NB_NIVEAUX_FACTORISATION - 1 ? "Suite" : "Suite (protocole RSA)");
         validated = true;
 
         if (correct) {
             messageLabel.setForeground(new Color(0x1E, 0x8E, 0x3E));
             messageLabel.setText("Bien joué !");
-            pField.setBorder(DEFAULT_FIELD_BORDER);
-            qField.setBorder(DEFAULT_FIELD_BORDER);
         } else {
-            pField.setText(formatGrand(currentFactors[0]));
-            qField.setText(formatGrand(currentFactors[1]));
+            pField.setText(String.valueOf(currentP));
+            qField.setText(String.valueOf(currentQ));
             pField.setBorder(ERROR_FIELD_BORDER);
             qField.setBorder(ERROR_FIELD_BORDER);
             messageLabel.setForeground(new Color(0xE7, 0x4C, 0x3C));
-            messageLabel.setText(
-                "Il y a des erreurs. La solution était p = " + formatGrand(currentFactors[0])
-                    + ", q = " + formatGrand(currentFactors[1]) + ".");
+            messageLabel.setText("Il y a des erreurs. La solution était p = " + currentP + ", q = " + currentQ + ".");
         }
     }
 
     private void onGiveUpClicked() {
-        pField.setText(formatGrand(currentFactors[0]));
-        qField.setText(formatGrand(currentFactors[1]));
+        pField.setText(formatGrand(currentP));
+        qField.setText(formatGrand(currentQ));
         pField.setEnabled(false);
         qField.setEnabled(false);
         pField.setBorder(DEFAULT_FIELD_BORDER);
@@ -266,24 +225,20 @@ public class FactorizationChallengeView extends JPanel {
         giveUpButton.setEnabled(false);
         actionButton.setText("Suite (protocole RSA)");
         validated = true;
-
         messageLabel.setForeground(new Color(0x29, 0x80, 0xB9));
-        JOptionPane.showMessageDialog(
-            this,
-            "Solution : p = " + formatGrand(currentFactors[0])
-                + ", q = " + formatGrand(currentFactors[1]) + ".\n\n"
+        JOptionPane.showMessageDialog(this,
+            "Solution : p = " + formatGrand(currentP) + ", q = " + formatGrand(currentQ) + ".\n\n"
                 + "Avec le General Number Field Sieve (GNFS, le meilleur algorithme\n"
                 + "classique connu pour factoriser de grands nombres), un module RSA\n"
                 + "réel de 2048 bits prendrait environ 6 × 10¹⁴ années-cœur de calcul :\n"
                 + "même avec un cluster d'un million de cœurs dédiés exclusivement à ce\n"
                 + "calcul, ça prendrait encore environ 600 millions d'années.",
-            "Solution et estimation",
-            JOptionPane.INFORMATION_MESSAGE);
+            "Solution et estimation", JOptionPane.INFORMATION_MESSAGE);
         messageLabel.setText("Solution révélée (voir la fenêtre).");
     }
 
     private void advance() {
-        if (levelIndex < 2) {
+        if (levelIndex < RSAModel.NB_NIVEAUX_FACTORISATION - 1) {
             levelIndex++;
             loadLevel();
         } else {

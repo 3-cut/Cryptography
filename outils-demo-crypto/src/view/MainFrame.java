@@ -16,6 +16,7 @@ public class MainFrame extends JFrame {
     public static final String SCREEN_SIEVE = "SIEVE";
     public static final String SCREEN_FACTORIZATION = "FACTORIZATION";
     public static final String SCREEN_RSA_PROTOCOL = "RSA_PROTOCOL";
+    public static final String SCREEN_LATTICE_STANDARD = "LATTICE_STANDARD";
     public static final String SCREEN_LATTICE_COMBINATION = "LATTICE_COMBINATION";
     public static final String SCREEN_LATTICE_CVP = "LATTICE_CVP";
     public static final String SCREEN_KYBER_PROTOCOL = "KYBER_PROTOCOL";
@@ -29,7 +30,7 @@ public class MainFrame extends JFrame {
         this.controller = controller;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(950, 650);
+        setSize(1200, 900);
         setMinimumSize(new Dimension(700, 500));
         setLocationRelativeTo(null);
 
@@ -48,6 +49,7 @@ public class MainFrame extends JFrame {
             case SCREEN_SIEVE -> new SieveView(controller);
             case SCREEN_FACTORIZATION -> new FactorizationChallengeView(controller);
             case SCREEN_RSA_PROTOCOL -> new RsaProtocolView(controller);
+            case SCREEN_LATTICE_STANDARD -> new LatticeStandardBasisView(controller);
             case SCREEN_LATTICE_COMBINATION -> new LatticeCombinationView(controller);
             case SCREEN_LATTICE_CVP -> new LatticeCvpView(controller);
             case SCREEN_KYBER_PROTOCOL -> new KyberProtocolView(controller);

@@ -21,3 +21,8 @@ make exec
 make install
 ```
 
+## Créer le serveur pour la version web
+
+```bash
+make web
+```

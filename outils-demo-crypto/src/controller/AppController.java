@@ -50,6 +50,10 @@ public class AppController {
     }
 
     public void goToKyberModule() {
+        mainFrame.showScreen(MainFrame.SCREEN_LATTICE_STANDARD);
+    }
+
+    public void goToLatticeCombination() {
         mainFrame.showScreen(MainFrame.SCREEN_LATTICE_COMBINATION);
     }
 

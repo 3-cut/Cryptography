@@ -5,23 +5,24 @@ import java.awt.*;
 
 /**
  * Panneau de dessin d'un petit réseau euclidien 2D : grille de repère,
- * points du réseau engendré par u et v, vecteurs de base, points A/B et
- * point "courant" (aperçu de la combinaison en cours de saisie).
- * Partagé par LatticeCombinationView et LatticeCvpView.
+ * vecteurs de base u et v, points A/B et point "courant" (aperçu de la
+ * combinaison en cours de saisie).
+ * Partagé par LatticeCombinationView, LatticeCvpView et
+ * LatticeStandardBasisView.
  */
 class LatticeGridPanel extends JPanel {
 
-    private static final int ECHELLE = 12; // pixels par unité
-    private static final int PORTEE = 16;   // unités visibles de chaque côté du centre
+    private static final int PORTEE = 16; // unités visibles de chaque côté du centre
 
     private int[] u;
     private int[] v;
     private int[] pointA;
+    private double[] pointADouble; // pour la cible CVP à coordonnées flottantes
     private int[] pointB;
     private int[] pointCourant;
 
     LatticeGridPanel() {
-        setPreferredSize(new Dimension(420, 420));
+        setPreferredSize(new Dimension(750, 750));
         setBackground(Color.WHITE);
     }
 
@@ -29,7 +30,17 @@ class LatticeGridPanel extends JPanel {
         this.u = u;
         this.v = v;
         this.pointA = pointA;
+        this.pointADouble = null;
         this.pointB = pointB;
+        repaint();
+    }
+
+    void configurerCvp(int[] u, int[] v, double[] pointADouble) {
+        this.u = u;
+        this.v = v;
+        this.pointA = null;
+        this.pointADouble = pointADouble;
+        this.pointB = null;
         repaint();
     }
 
@@ -38,12 +49,18 @@ class LatticeGridPanel extends JPanel {
         repaint();
     }
 
+    /** Échelle recalculée à chaque dessin : le contenu remplit toujours tout le panneau. */
+    private double echelle() {
+        int cote = Math.min(getWidth(), getHeight());
+        return cote / (double) (2 * PORTEE + 2);
+    }
+
     private int px(double x) {
-        return getWidth() / 2 + (int) Math.round(x * ECHELLE);
+        return getWidth() / 2 + (int) Math.round(x * echelle());
     }
 
     private int py(double y) {
-        return getHeight() / 2 - (int) Math.round(y * ECHELLE);
+        return getHeight() / 2 - (int) Math.round(y * echelle());
     }
 
     @Override
@@ -65,18 +82,6 @@ class LatticeGridPanel extends JPanel {
         g2.drawLine(px(0), py(-PORTEE), px(0), py(PORTEE));
 
         if (u != null && v != null) {
-            // points du réseau engendré par u, v, visibles dans le cadre
-            g2.setColor(new Color(0xB0, 0xC4, 0xDE));
-            for (int a = -10; a <= 10; a++) {
-                for (int b = -10; b <= 10; b++) {
-                    int x = a * u[0] + b * v[0];
-                    int y = a * u[1] + b * v[1];
-                    if (Math.abs(x) <= PORTEE && Math.abs(y) <= PORTEE) {
-                        g2.fillOval(px(x) - 3, py(y) - 3, 6, 6);
-                    }
-                }
-            }
-
             dessinerVecteur(g2, 0, 0, u[0], u[1], new Color(0x27, 0xAE, 0x60), "u");
             dessinerVecteur(g2, 0, 0, v[0], v[1], new Color(0xE6, 0x7E, 0x22), "v");
         }
@@ -84,11 +89,25 @@ class LatticeGridPanel extends JPanel {
         if (pointA != null) {
             dessinerPoint(g2, pointA, Color.BLACK, "A");
         }
+        if (pointADouble != null) {
+            dessinerPointDouble(g2, pointADouble, Color.BLACK, "A");
+        }
         if (pointB != null) {
             dessinerPoint(g2, pointB, new Color(0x80, 0x00, 0x80), "B");
         }
         if (pointCourant != null) {
             dessinerPoint(g2, pointCourant, new Color(0xE7, 0x4C, 0x3C), "");
+        }
+    }
+
+    private void dessinerPointDouble(Graphics2D g2, double[] p, Color couleur, String etiquette) {
+        g2.setColor(couleur);
+        int x = px(p[0]);
+        int y = py(p[1]);
+        g2.fillOval(x - 5, y - 5, 10, 10);
+        if (!etiquette.isEmpty()) {
+            g2.setFont(new Font("SansSerif", Font.BOLD, 13));
+            g2.drawString(etiquette, x + 8, y - 8);
         }
     }
 

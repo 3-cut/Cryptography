@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outils de démonstration pour la cryptographie</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===================== ACCUEIL ===================== -->
+<section id="screen-home" class="screen">
+  <h1>Outils de démonstration pour la cryptographie</h1>
+  <p class="soustitre">Choisissez une famille de cryptographie</p>
+  <div class="cryptographie-cadre">
+    <div class="carte-categorie">
+      <div class="categorie-nom">Pré-quantique</div>
+      <button class="bouton-principal" onclick="allerVers('sieve')">RSA</button>
+    </div>
+    <div class="carte-categorie">
+      <div class="categorie-nom">Post-quantique</div>
+      <button class="bouton-principal" onclick="allerVers('lattice-standard')">Kyber</button>
+    </div>
+  </div>
+  <p class="pied">Réalisé par PIERRET Thomas</p>
+</section>
+
+<!-- ===================== CRIBLE ===================== -->
+<section id="screen-sieve" class="screen">
+  <header class="entete">
+    <button onclick="allerVers('home')">← Accueil</button>
+    <div class="titre-bloc">
+      <h2>RSA — Crible d'Ératosthène</h2>
+      <p id="sieve-soustitre" class="soustitre"></p>
+    </div>
+    <div class="entete-droite">
+      <button onclick="afficherInfoPremier()">i</button>
+      <button onclick="changerModeCrible()">mode</button>
+    </div>
+  </header>
+  <div id="sieve-grille" class="sieve-grille"></div>
+  <footer class="pied-actions">
+    <button onclick="allerVers('factorization')">Passer →</button>
+    <p id="sieve-message" class="message"></p>
+    <button id="sieve-valider" onclick="sieveValider()" style="display:none">Valider</button>
+  </footer>
+</section>
+
+<!-- ===================== CHALLENGE DE FACTORISATION ===================== -->
+<section id="screen-factorization" class="screen">
+  <header class="entete">
+    <button onclick="allerVers('home')">← Accueil</button>
+    <h2 id="facto-niveau">Niveau 1</h2>
+  </header>
+  <div class="centre-colonne">
+    <p class="soustitre">Challenge de factorisation en 2 nombres premiers</p>
+    <p class="hint">Trouvez les deux nombres premiers p et q tels que p × q = N.</p>
+    <div class="ligne-n">
+      <span id="facto-n" class="n-affiche">N = ?</span>
+      <button id="facto-voir-entier" onclick="factoVoirEnEntier()" style="display:none">Voir en entier</button>
+    </div>
+    <div class="ligne-inputs">
+      <label>p = <input id="facto-p" type="text" size="10"></label>
+      <label>q = <input id="facto-q" type="text" size="10"></label>
+    </div>
+    <button id="facto-giveup" class="bouton-large" style="display:none" onclick="factoGiveUp()">Je ne sais pas...</button>
+  </div>
+  <footer class="pied-actions pied-actions-colonne">
+    <p id="facto-message" class="message"></p>
+    <div class="pied-boutons">
+      <button onclick="allerVers('rsa-protocol')">Passer →</button>
+      <button id="facto-valider" onclick="factoValider()">Valider</button>
+    </div>
+  </footer>
+</section>
+
+<!-- ===================== RSA : PRÉSENTATION DU PROTOCOLE ===================== -->
+<section id="screen-rsa-protocol" class="screen">
+  <header class="entete">
+    <button onclick="allerVers('home')">← Accueil</button>
+    <h2>Présentation du protocole RSA</h2>
+    <button onclick="rsaRegenerer()">⟳ Régénérer les clés</button>
+  </header>
+  <div class="cartes-cles">
+    <div class="carte">
+      <h3>Clé publique</h3>
+      <div class="ligne-formule"><span id="rsa-n">N = ...</span> <button onclick="infoDialog('N', 'N = p × q')">i</button></div>
+      <div class="ligne-formule"><span id="rsa-phin">φ(N) = ...</span> <button onclick="infoDialog('φ', 'φ : l\'indicatrice d\'Euler, nombre d\'entiers inférieurs à N tels que N soit premier avec eux (pgcd(x,N)=1, avec x&lt;N).')">i</button></div>
+      <div class="ligne-formule"><span id="rsa-e">e = ...</span> <button onclick="infoDialog('e', 'e est choisi aléatoirement tel que 1&lt;e&lt;φ(N) et pgcd(e,φ(N))=1.')">i</button></div>
+      <button onclick="rsaVoirComplet('pub')">Voir les valeurs complètes</button>
+      <p class="cle-bold">Clé publique = (N, e)</p>
+    </div>
+    <div class="carte">
+      <h3>Clé privée</h3>
+      <div class="ligne-formule"><span id="rsa-p">p = ...</span> <button onclick="infoDialog('p', 'p et q sont des nombres premiers de 512 bits, générés à l\'aide de l\'algorithme de Miller-Rabin.')">i</button></div>
+      <div class="ligne-formule"><span id="rsa-q">q = ...</span></div>
+      <div class="ligne-formule"><span id="rsa-d-label">d≡e⁻¹(mod(φ(N)))</span> <button onclick="infoDialog('d', 'd, inverse modulaire de e : d × e ≡ 1 (mod(φ(N))). Le reste de la division euclidienne de d × e par φ(N) est 1.')">i</button></div>
+      <div class="ligne-formule"><span id="rsa-d">d = ...</span></div>
+      <button onclick="rsaVoirComplet('priv')">Voir les valeurs complètes</button>
+      <p class="cle-bold">Clé privée = (d, p, q)</p>
+    </div>
+  </div>
+  <div class="cartes-chiffrement">
+    <div class="carte">
+      <h3>Chiffrement</h3>
+      <p class="hint">N fait ~1024 bits : message jusqu'à environ 120 caractères ASCII.</p>
+      <p class="flux">Alice→message→chiffrer→message chiffré</p>
+      <p class="formule-noire">À l'aide de la clé publique (de Bob) : C≡m^e(mod(N))</p>
+      <div class="ligne-inputs">
+        <label>Entrer un message à chiffrer : <input id="rsa-message" type="text" size="24"></label>
+        <button onclick="rsaChiffrer()">Chiffrer</button>
+      </div>
+      <p id="rsa-resultat-chiffrement" class="resultat"></p>
+    </div>
+    <div class="carte">
+      <h3>Déchiffrement</h3>
+      <p class="flux">message chiffré→déchiffrer→message déchiffré→Bob</p>
+      <p class="formule-noire">À l'aide de la clé privée (de Bob) : m≡c^d(mod(N))</p>
+      <button onclick="rsaDechiffrer()">Déchiffrer</button>
+      <p id="rsa-resultat-dechiffrement" class="resultat"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RÉSEAUX EUCLIDIENS (3 exercices) ===================== -->
+<section id="screen-lattice-standard" class="screen lattice-screen">
+  <header class="entete">
+    <button onclick="allerVers('home')">← Accueil</button>
+    <h2>Kyber — Réseaux euclidiens (1/3)</h2>
+  </header>
+  <div class="lattice-corps" data-lattice="standard">
+    <p class="but">But : trouver la combinaison linéaire pour aller de l'origine au point A, à l'aide des vecteurs u et v (la base canonique).</p>
+    <div class="lattice-zone">
+      <canvas class="lattice-canvas"></canvas>
+      <div class="lattice-droite">
+        <p class="lat-uv lat-u">u = (?, ?)</p>
+        <p class="lat-uv lat-v">v = (?, ?)</p>
+        <p class="lat-ab lat-a">Origine = (0, 0)  (départ)</p>
+        <p class="lat-ab lat-b">A = (?, ?)  (cible)</p>
+        <div class="lat-coeffs">
+          <label>a = <input type="number" class="lat-spin-a" value="0" step="1"></label>
+          <label>b = <input type="number" class="lat-spin-b" value="0" step="1"></label>
+        </div>
+        <p class="lat-formule">(0,0) + a·u + b·v = ?  (point rouge)</p>
+      </div>
+    </div>
+  </div>
+  <footer class="pied-actions">
+    <button onclick="allerVers('lattice-combination')">Passer →</button>
+    <p class="lat-message message"></p>
+    <button class="lat-valider">Valider</button>
+  </footer>
+</section>
+
+<section id="screen-lattice-combination" class="screen lattice-screen">
+  <header class="entete">
+    <button onclick="allerVers('home')">← Accueil</button>
+    <h2>Kyber — Réseaux euclidiens (2/3)</h2>
+  </header>
+  <div class="lattice-corps" data-lattice="combination">
+    <p class="but">But : trouver la combinaison linéaire pour aller de l'origine au point A, à l'aide des vecteurs u et v.</p>
+    <div class="lattice-zone">
+      <canvas class="lattice-canvas"></canvas>
+      <div class="lattice-droite">
+        <p class="lat-uv lat-u">u = (?, ?)</p>
+        <p class="lat-uv lat-v">v = (?, ?)</p>
+        <p class="lat-ab lat-a">Origine = (0, 0)  (départ)</p>
+        <p class="lat-ab lat-b">A = (?, ?)  (cible)</p>
+        <div class="lat-coeffs">
+          <label>a = <input type="number" class="lat-spin-a" value="0" step="1"></label>
+          <label>b = <input type="number" class="lat-spin-b" value="0" step="1"></label>
+        </div>
+        <p class="lat-formule">(0,0) + a·u + b·v = ?  (point rouge)</p>
+      </div>
+    </div>
+  </div>
+  <footer class="pied-actions">
+    <button onclick="allerVers('lattice-cvp')">Passer →</button>
+    <p class="lat-message message"></p>
+    <button class="lat-valider">Valider</button>
+  </footer>
+</section>
+
+<section id="screen-lattice-cvp" class="screen lattice-screen">
+  <header class="entete">
+    <button onclick="allerVers('home')">← Accueil</button>
+    <h2>Kyber — Réseaux euclidiens (3/3 : CVP)</h2>
+  </header>
+  <div class="lattice-corps" data-lattice="cvp">
+    <p class="but">But : trouver la combinaison linéaire de vecteurs u et v pour aller de l'origine au point A (qui n'appartient pas au réseau) — C.V.P.</p>
+    <div class="lattice-zone">
+      <canvas class="lattice-canvas"></canvas>
+      <div class="lattice-droite">
+        <p class="lat-uv lat-u">u = (?, ?)</p>
+        <p class="lat-uv lat-v">v = (?, ?)</p>
+        <p class="lat-ab lat-a">Origine = (0, 0)  (départ)</p>
+        <p class="lat-ab lat-b">A = (?, ?)  (cible, hors réseau)</p>
+        <div class="lat-coeffs">
+          <label>a = <input type="number" class="lat-spin-a" value="0" min="-15" max="15" step="1"></label>
+          <label>b = <input type="number" class="lat-spin-b" value="0" min="-15" max="15" step="1"></label>
+        </div>
+        <p class="lat-formule">(0,0) + a·u + b·v = ?  (point rouge)</p>
+      </div>
+    </div>
+  </div>
+  <footer class="pied-actions">
+    <button onclick="allerVers('kyber-protocol')">Passer →</button>
+    <p class="lat-message message"></p>
+    <button class="lat-valider">Valider</button>
+  </footer>
+</section>
+
+<!-- ===================== KYBER : PRÉSENTATION DU PROTOCOLE ===================== -->
+<section id="screen-kyber-protocol" class="screen">
+  <header class="entete">
+    <button onclick="allerVers('home')">← Accueil</button>
+    <h2>Présentation du protocole Kyber (post-quantique)</h2>
+    <button onclick="kyberRegenerer()">⟳ Régénérer les clés</button>
+  </header>
+  <div class="carte cadre-anneau">
+    <span id="kyber-cadre-formule">Rq = Zq[X] / (Xⁿ + 1)     où     q = 3389     n = 256</span>
+    <p class="explication">Anneau de polynômes modulo Xⁿ+1 (donc de degré inférieur à n−1), dont les coefficients sont modulo q (reste de la division euclidienne du coefficient par q).</p>
+  </div>
+  <div class="cartes-cles">
+    <div class="carte">
+      <h3>Clé publique</h3>
+      <p class="ligne-formule-simple">A : matrice 2×2 de polynômes de Rq</p>
+      <div class="ligne-formule"><span>t = A×s + e</span> <button onclick="infoDialog('e', 'e : polynôme de bruit, coefficients appartenant à {-2, -1, 0, 1, 2}.')">i</button></div>
+      <button onclick="kyberVoirComplet('pub')">Voir le détail complet (A, t)</button>
+      <p class="cle-bold">Clé publique = (A, t)</p>
+      <p class="exemple-caption">Exemple avec n = 4 :</p>
+      <p class="exemple-ligne">A =</p>
+      <div id="kyber-exemple-a" class="matrice-grille"></div>
+      <p class="exemple-ligne" style="margin-top:6px">t =</p>
+      <div id="kyber-exemple-t" class="vecteur-grille"></div>
+    </div>
+    <div class="carte">
+      <h3>Clé privée</h3>
+      <div class="ligne-formule"><span>s : vecteur de 2 polynômes de Rq</span> <button onclick="infoDialog('s', 'Coefficients appartenant à {-2, -1, 0, 1, 2}.')">i</button></div>
+      <button onclick="kyberVoirComplet('priv')">Voir le détail complet (s)</button>
+      <p class="cle-bold">Clé privée = (s)</p>
+      <p class="exemple-caption">Exemple avec n = 4 :</p>
+      <p class="exemple-ligne">s =</p>
+      <div id="kyber-exemple-s" class="vecteur-grille"></div>
+    </div>
+  </div>
+  <div class="cartes-chiffrement">
+    <div class="carte">
+      <h3>Chiffrement</h3>
+      <p class="hint">Message court (32 caractères ASCII maximum, encodé en bits).</p>
+      <p class="flux">Alice→message→chiffrer→message chiffré</p>
+      <p class="formule-noire">À l'aide de la clé publique (de Bob) : u=Aᵗ·r+e1, v=tᵗ·r+e2+m</p>
+      <div class="ligne-inputs">
+        <label>Entrer un message à chiffrer : <input id="kyber-message" type="text" size="16"></label>
+        <button onclick="kyberChiffrer()">Chiffrer</button>
+      </div>
+      <p id="kyber-resultat-chiffrement" class="resultat"></p>
+    </div>
+    <div class="carte">
+      <h3>Déchiffrement</h3>
+      <p class="flux">message chiffré→déchiffrer→message déchiffré→Bob</p>
+      <p class="formule-noire">À l'aide de la clé privée (de Bob) : m=v−sᵗ·u</p>
+      <button onclick="kyberDechiffrer()">Déchiffrer</button>
+      <p id="kyber-resultat-dechiffrement" class="resultat"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== POPUP GÉNÉRIQUE ===================== -->
+<div id="popup-overlay" class="popup-overlay" onclick="fermerPopup(event)">
+  <div class="popup-boite">
+    <div class="popup-entete">
+      <h3 id="popup-titre"></h3>
+      <button onclick="fermerPopup()">✕</button>
+    </div>
+    <div id="popup-contenu" class="popup-contenu"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
