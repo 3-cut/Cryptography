@@ -90,7 +90,7 @@ public class HomeView extends JPanel {
 
     private JComponent buildFooter() {
         JLabel footer = new JLabel(
-            "Réalisé par PIERRET Thomas",
+            "Réalisé par 3cut",
             SwingConstants.CENTER);
         footer.setFont(new Font("SansSerif", Font.ITALIC, 12));
         footer.setForeground(Color.GRAY);
