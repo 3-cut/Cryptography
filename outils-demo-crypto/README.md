@@ -1,7 +1,7 @@
 # Outils de démonstration pour la cryptographie
 
 ## Auteur
-Projet réalisé par PIERRET Thomas, l'interface graphique et certaines autres parties du code ont été réalisés à l'aide de l'IA Claude.
+Projet réalisé par 3cut, l'interface graphique et certaines autres parties du code ont été réalisés à l'aide de l'IA Claude.
 
 ## Description
 
